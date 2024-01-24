@@ -89,12 +89,14 @@ def email_checker(key, email):
 # Main function
 def main():
     parser = argparse.ArgumentParser(description='Check if a password or email has been breached OR NOT, Coded by AuxGrep.')
-    parser.add_argument('input', help='Password or email to check for breaches')
+    parser.add_argument('--email', help='Check if an email has been breached')
+    parser.add_argument('--password', help='Check if a password has been breached')
     args = parser.parse_args()
 
-    if network(): # Tuimeicall network connectivity Function ku-check kabla ya kuaanza kufanya 
-        os_check()
-        if '@' in args.input: # Program inacheck input data, ikigundua kuna alama @ kwenye input itajua hio ni email
+    if args.email:  # Check if --email argument is provided
+        if network():  # Tuimeicall network connectivity Function ku-check kabla ya kuaanza kufanya
+            os_check()
+            key_In = []  # Move this inside the if statement for email checking
             config = ConfigParser()
             config.read('config.ini')
             if 'API' not in config:
@@ -105,9 +107,8 @@ def main():
                 with open('config.ini', 'w') as configfile:
                     config.write(configfile)
             key_In.append(config['API']['key'])
-
             for w in key_In:
-                email_checker(key=str(w), email=args.input)
+                email_checker(key=str(w), email=args.email)
                 if email_breach:
                     table = PrettyTable()
                     table.field_names = ['Email', 'Breaches']
@@ -115,14 +116,20 @@ def main():
                         table.add_row([entry['Email'], entry['Breaches']])
                     print(table)
         else:
-            breaches = pwned(passwd=args.input)
+            sys.exit(f'{red}Connect your PC to the Internet to access the network.{reset}')
+    elif args.password:  # Check if --password argument is provided
+        if network():  # Tuimeicall network connectivity Function ku-check kabla ya kuaanza kufanya
+            os_check()
+            breaches = pwned(passwd=args.password)
             if breaches:
                 table = PrettyTable()
                 table.field_names = ['Password', 'Breaches']
-                table.add_row([args.input, breaches])
+                table.add_row([args.password, breaches])
                 print(table)
+        else:
+            sys.exit(f'{red}Connect your PC to the Internet to access the network.{reset}')
     else:
-        sys.exit(f'{red}Connect your PC to the Internet to access the network.{reset}')
+        parser.print_help()
 
 if __name__ == "__main__":
     main()
