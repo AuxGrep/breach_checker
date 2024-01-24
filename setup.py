@@ -11,6 +11,8 @@ C = '\033[36m'
 W = '\033[0m'  
 BOLD = "\033[1m"
 
+required = ['prettytable', 'pyhibp', 'colorama', 'configparser']
+
 def wozAA():
     banner = r'''
       ___                      _       ____                  _
@@ -31,7 +33,6 @@ wozAA()
 def OS():
     try:
         if platform.system() == 'Windows':
-            required = ['prettytable', 'pyhibp', 'colorama', 'configparser']
             for setup in required:
                 print(f'[--] Installing {setup}')
                 subprocess.run(['pip', 'install', setup], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
