@@ -13,5 +13,5 @@ A breach checker works by allowing users to input their email addresses, usernam
 2. cd breach_checker
 3. sudo python3 setup.py for [Linux] or python setup.py for [Windows]
 4. sudo python3 breach_checker.py -h for help
-5. sudo python3 breach_checker.py --password <mypassword>  => This will check your password
+5. sudo python3 breach_checker.py --password you_password  => This will check your password
 6. sudo python3 breach_checker.py --email <youremail@example.com> => This will check your Email
