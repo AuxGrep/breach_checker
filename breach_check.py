@@ -1,7 +1,9 @@
 import argparse
 import platform
 import sys
+import logging
 import time
+import os
 from configparser import ConfigParser
 from colorama import Fore, Style
 from prettytable import PrettyTable
@@ -21,6 +23,8 @@ W = '\033[0m'
 BOLD = "\033[1m"
 
 Version = "1.0"
+logs = logging.basicConfig(level=logging.INFO, filemode='a', \
+                           filename='breach.log', format='[%(asctime)s] - %(levelname)s - %(message)s')
 
 def wozAA():
     banner = r'''
@@ -51,10 +55,12 @@ def pwned(passwd):
         print(f'{cyan}[Password_check: {passwd}] Checking if the password was breached{reset}')
         time.sleep(4)
         if resp:
+            logging.info(f'[Status] Password for {passwd} was checked successful')
             print(f"{red}Password breached!{reset}")
             print(f"This password was used {resp} time(s) before.")
             return resp
         else:
+            logging.info(f'[Status: Safe] Password for {passwd} was checked successful')
             print(f'{green}[Password_check]: {passwd} is SAFE to use{reset}')
     except KeyboardInterrupt:
         exit()
@@ -62,7 +68,7 @@ def pwned(passwd):
 # Function ya kucheck kama PC ya user iko connected na Internet
 def network(google='https://google.com'):
     try:
-        con.urlopen(google)
+        con.urlopen(google, timeout=10)
         return True
     except:
         return False
@@ -71,9 +77,12 @@ def network(google='https://google.com'):
 def os_check(sup=['Linux', 'Windows']):
     try:
         if platform.system() not in sup:
-            sys.exit(f'{red}Unsupported OS{reset}')
+            logging.error(f'[{platform.system()}] Unsupported OS Detected')
+            sys.exit()
+
     except OSError as e:
-        exit(f'An error occurred: {e}')
+        logging.error(str(f'[OS-error] {e}'))
+        exit()
 
 # Function ya kucheck kama email ipo kwenye databreach
 def email_checker(key, email):
@@ -81,10 +90,12 @@ def email_checker(key, email):
         pyhibp.set_user_agent(ua="Awesome application/0.0.1 (hacker is here)")
         pyhibp.set_api_key(key=str(key))
         resp2 = pyhibp.get_account_breaches(account=str(email), truncate_response=True)
+        logging.info(f'[Status] email: {email} was checked successful')
         email_breach.append({'Email': email, 'Breaches': resp2})
         return resp2
     except TimeoutError:
-        sys.exit('Connection timeout!! Try again later.')
+        logging.error(str(f'[Connection timeout] Connection timeout!! Try again later.'))
+        sys.exit()
 
 # Main function
 def main():
@@ -95,14 +106,25 @@ def main():
 
     if args.email:  # Check if --email argument is provided
         if network():  # Tuimeicall network connectivity Function ku-check kabla ya kuaanza kufanya
+            logging.info('Connection check successful for email check functionality: Pc was connected to the internet')
             os_check()
             key_In = []  # Move this inside the if statement for email checking
             config = ConfigParser()
             config.read('config.ini')
             if 'API' not in config:
+                logging.error('API not in Configuration')
                 config['API'] = {}
+
             if 'key' not in config['API']:
-                key_ = input('Enter API key (GET it from https://haveibeenpwned.com/API/Key): ')
+                logging.error('Key was not found')
+                if platform.system() == 'Linux':
+                    print('[no-API Found] OPening firefox')
+                    os.system('firefox https://haveibeenpwned.com/API/Key &')
+                    key_ = input('Enter API key (GET it from https://haveibeenpwned.com/API/Key): ')
+                    
+                elif platform.system() == 'Windows':
+                    print('[no-API Found] OPening firefox')
+
                 config['API']['key'] = key_
                 with open('config.ini', 'w') as configfile:
                     config.write(configfile)
@@ -110,24 +132,34 @@ def main():
             for w in key_In:
                 email_checker(key=str(w), email=args.email)
                 if email_breach:
+                    logging.info(f'email check for an email {args.email} was succefully [status: Breached]')
                     table = PrettyTable()
                     table.field_names = ['Email', 'Breaches']
                     for entry in email_breach:
                         table.add_row([entry['Email'], entry['Breaches']])
                     print(table)
+                else:
+                    logging.info(f'email check for an email {args.email} was succefully [status: Safe]')
+
         else:
-            sys.exit(f'{red}Connect your PC to the Internet to access the network.{reset}')
+            logging.error('Connect your PC to the Internet to access the network.')
+            sys.exit(f'{red}[---] Connect your PC to the Internet to access the network.{reset}')
     elif args.password:  # Check if --password argument is provided
         if network():  # Tuimeicall network connectivity Function ku-check kabla ya kuaanza kufanya
+            logging.info('Connection check successful for password check functionality: Pc was connected to the internet')
             os_check()
             breaches = pwned(passwd=args.password)
             if breaches:
+                logging.info(f'Password check for an password {args.password} was succefully [status: Breached]')
                 table = PrettyTable()
                 table.field_names = ['Password', 'Breaches']
                 table.add_row([args.password, breaches])
                 print(table)
+            else:
+                logging.info(f'Password check for an password {args.password} was succefully [status: Safe]')
         else:
-            sys.exit(f'{red}Connect your PC to the Internet to access the network.{reset}')
+            logging.error('Connect your PC to the Internet to access the network')
+            sys.exit(f'{red}[---] Connect your PC to the Internet to access the network.{reset}')
     else:
         parser.print_help()
 
